@@ -26,6 +26,7 @@ TODO.md
 .DS_Store
 .idea/
 .vscode/
+*.code-workspace
 
 # Logs
 *.log

@@ -4,7 +4,7 @@ import csv
 from io import StringIO
 import unittest
 
-from lembar.extraction import _normalized_table
+from lembar.extraction import _normalized_table, _postprocess_table, _usable_tables
 
 
 class TableExtractionTests(unittest.TestCase):
@@ -75,6 +75,99 @@ class TableExtractionTests(unittest.TestCase):
             '"No.","Predikat Kinerja Pegawai","Penjelasan"\n'
             '1,"Sangat baik","Baris pertama Baris kedua"\n'
             '2,"Baik","1. Satu \n2. Dua"\n',
+        )
+
+    def test_usable_tables_drops_one_column_fragments_when_full_table_exists(self) -> None:
+        full_table = [["No", "Kategori"], ["2", "Tenaga Ahli"], ["3", "Perwakilan Negara"]]
+        fragments = [[["Ahli"], ["Madya"]], [["Jumlah"], ["kegiatan"]]]
+
+        self.assertEqual(_usable_tables([full_table, *fragments]), [full_table])
+
+    def test_postprocess_compacts_jenjang_table(self) -> None:
+        table = _normalized_table(
+            [
+                [
+                    "No",
+                    "Kategori",
+                    "Hasil Kerja",
+                    "Indikator",
+                    "Target",
+                    "Satuan",
+                    "Penjelasan",
+                    "",
+                    "",
+                    "Bukti Kelengkapan",
+                    "",
+                    "",
+                    "",
+                    "Jenjang Jabatan Sumber Daya Manusia",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                ],
+                ["", "", "", "", "", "", "", "", "", "", "", "", "", "Ilmu Pengetahuan dan Teknologi"],
+                ["", "", "", "", "", "", "", "", "", "", "", "", "Ahli Utama", "", "Ahli Madya", "Ahli Muda", "Ahli Pertama"],
+                [
+                    "2",
+                    "Tenaga Ahli",
+                    "Menjadi tenaga\nahli dalam forum\nteknis nasional",
+                    "Jumlah\nkegiatan",
+                    "1",
+                    "Kegiatan",
+                    "",
+                    "1. Peran aktif sebagai",
+                    "",
+                    "",
+                    "1. Surat",
+                    "",
+                    "2,5",
+                    "",
+                    "2,5",
+                    "2,5",
+                    "2,5",
+                ],
+                ["", "", "", "", "", "", "", "tenaga ahli yang", "", "", "undangan/Surat"],
+                ["", "", "", "", "", "", "", "diundang atau ditunjuk", "", "", "tugas/Letter of"],
+                ["", "", "", "", "", "", "", "2. Berlaku kelipatan per-", "", "", "2. Laporan kegiatan"],
+                ["", "", "", "", "", "", "", "program/kegiatan"],
+            ]
+        )
+
+        self.assertEqual(
+            _postprocess_table(table),
+            [
+                [
+                    "No",
+                    "Kategori",
+                    "Hasil Kerja",
+                    "Indikator",
+                    "Target",
+                    "Satuan",
+                    "Penjelasan",
+                    "Bukti Kelengkapan",
+                    "Ahli Utama",
+                    "Ahli Madya",
+                    "Ahli Muda",
+                    "Ahli Pertama",
+                ],
+                [
+                    2,
+                    "Tenaga Ahli",
+                    "Menjadi tenaga ahli dalam forum teknis nasional",
+                    "Jumlah kegiatan",
+                    1,
+                    "Kegiatan",
+                    "1. Peran aktif sebagai tenaga ahli yang diundang atau ditunjuk \n"
+                    "2. Berlaku kelipatan per- program/kegiatan",
+                    "1. Surat undangan/Surat tugas/Letter of \n2. Laporan kegiatan",
+                    "2,5",
+                    "2,5",
+                    "2,5",
+                    "2,5",
+                ],
+            ],
         )
 
 
