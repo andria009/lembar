@@ -1,0 +1,27 @@
+%PDF-1.7
+1 0 obj
+<< /Type /Catalog /AcroForm 2 0 R >>
+endobj
+2 0 obj
+<< /Fields [3 0 R] >>
+endobj
+3 0 obj
+<< /FT /Sig /T (Approval Signature) /V 4 0 R >>
+endobj
+4 0 obj
+<<
+  /Type /Sig
+  /Filter /Adobe.PPKLite
+  /SubFilter /adbe.pkcs7.detached
+  /Name (Ada Lovelace)
+  /M (D:20260430113500+07'00')
+  /Reason (Approved)
+  /Location (Jakarta)
+  /ContactInfo (ada@example.test)
+  /ByteRange [0 120 220 30]
+  /Contents <00112233>
+>>
+endobj
+trailer
+<< /Root 1 0 R >>
+%%EOF
