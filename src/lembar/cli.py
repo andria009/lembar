@@ -83,10 +83,24 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _add_page_operation_commands(subcommands: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     """Register commands that create new PDFs by changing page structure."""
-    merge = subcommands.add_parser("merge", help="Merge PDFs")
+    merge = subcommands.add_parser(
+        "merge",
+        help="Merge PDFs",
+        description=(
+            "Merge signed or unsigned PDFs. If signed inputs are detected, "
+            "Lembar warns that original signatures will not validate on merged "
+            "pages. Use --preserve-as-attachments to embed signed source PDFs "
+            "unchanged as attachments."
+        ),
+    )
     merge.add_argument("output", type=Path)
     merge.add_argument("inputs", type=Path, nargs="+")
-    merge.set_defaults(handler=lambda args: _run_file_command(lambda: merge_pdfs(args.inputs, args.output), args.output))
+    merge.add_argument(
+        "--preserve-as-attachments",
+        action="store_true",
+        help="Attach original signed input PDFs to preserve their signatures as original files",
+    )
+    merge.set_defaults(handler=_merge)
 
     split = subcommands.add_parser("split", help="Split PDF into one file per page")
     split.add_argument("pdf", type=Path)
@@ -306,6 +320,31 @@ def _split(args: argparse.Namespace) -> int:
         return 2
     for path in paths:
         print(path)
+    return 0
+
+
+def _merge(args: argparse.Namespace) -> int:
+    try:
+        signed_inputs = merge_pdfs(args.inputs, args.output, args.preserve_as_attachments)
+    except PdfToolError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if signed_inputs:
+        print(
+            "warning: merging digitally signed PDFs rewrites PDF bytes; original signatures "
+            "will not validate on the merged pages.",
+            file=sys.stderr,
+        )
+        if args.preserve_as_attachments:
+            joined = ", ".join(str(path) for path in signed_inputs)
+            print(f"warning: preserved signed originals as attachments: {joined}", file=sys.stderr)
+        else:
+            print(
+                "warning: use --preserve-as-attachments to embed original signed PDFs unchanged.",
+                file=sys.stderr,
+            )
+    print(args.output)
     return 0
 
 

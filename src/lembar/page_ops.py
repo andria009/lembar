@@ -7,10 +7,28 @@ from pathlib import Path
 from pypdf import PdfReader, PdfWriter
 
 from lembar.common import PdfToolError, all_except, clone_metadata, copy_pages, reader, selected_indices, write_pdf
+from lembar.signatures import PdfSignatureError, list_signatures
 
 
-def merge_pdfs(inputs: list[Path], output: Path) -> None:
-    """Merge all pages from multiple PDFs into one output PDF."""
+def merge_pdfs(inputs: list[Path], output: Path, preserve_as_attachments: bool = False) -> list[Path]:
+    """Merge PDFs and optionally attach original signed PDFs.
+
+    Merging rewrites PDF structure, so original cryptographic signatures do not
+    remain valid for the merged pages. Returning the signed inputs lets callers
+    warn users, and attaching originals preserves the signed files byte-for-byte
+    as evidence inside the merged output.
+    """
+    signed_inputs = _signed_inputs(inputs)
+    writer = _merged_writer(inputs)
+    if preserve_as_attachments:
+        for signed_input in signed_inputs:
+            writer.add_attachment(signed_input.name, signed_input.read_bytes())
+    write_pdf(writer, output)
+    return signed_inputs
+
+
+def _merged_writer(inputs: list[Path]) -> PdfWriter:
+    """Create a writer containing every page from the input PDFs."""
     writer = PdfWriter()
     for pdf in inputs:
         source = reader(pdf)
@@ -18,7 +36,19 @@ def merge_pdfs(inputs: list[Path], output: Path) -> None:
             raise PdfToolError(f"encrypted PDF cannot be merged without decrypting: {pdf}")
         for page in source.pages:
             writer.add_page(page)
-    write_pdf(writer, output)
+    return writer
+
+
+def _signed_inputs(inputs: list[Path]) -> list[Path]:
+    """Return input PDFs that contain at least one digital signature."""
+    signed: list[Path] = []
+    for pdf in inputs:
+        try:
+            if list_signatures(pdf):
+                signed.append(pdf)
+        except PdfSignatureError:
+            continue
+    return signed
 
 
 def extract_pages(input_pdf: Path, pages: str, output: Path) -> None:

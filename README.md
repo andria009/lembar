@@ -80,6 +80,7 @@ lembar pages-info --json file.pdf
 
 ```zsh
 lembar merge output.pdf input1.pdf input2.pdf
+lembar merge output.pdf signed1.pdf signed2.pdf --preserve-as-attachments
 lembar split input.pdf output-dir
 lembar extract-pages input.pdf output.pdf --pages 1,3-5
 lembar delete-pages input.pdf output.pdf --pages 2
@@ -91,6 +92,8 @@ lembar compress input.pdf output.pdf
 ```
 
 Page ranges are 1-based and support `all`, `*`, `1`, `1-3`, and `1,3,5-7`.
+
+`merge` warns when digitally signed PDFs are merged because page merging rewrites PDF bytes and invalidates original cryptographic signatures on the merged pages. Use `--preserve-as-attachments` to embed the original signed PDFs unchanged as attachments.
 
 ### Extraction
 
