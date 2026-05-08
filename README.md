@@ -1,5 +1,9 @@
 # Lembar
 
+<p align="center">
+  <img src="docs/assets/lembar-icon.png" alt="Lembar application icon" width="180">
+</p>
+
 Python command-line tools for inspecting, extracting, editing, and validating PDF files.
 
 ## Setup
@@ -152,5 +156,7 @@ python -m compileall src tests
 ```
 
 ## License
+
+[![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](LICENSE)
 
 Lembar is released under the BSD 3-Clause License. See [LICENSE](LICENSE).
